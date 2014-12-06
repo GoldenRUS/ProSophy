@@ -178,8 +178,7 @@ class DB
      */
 
     protected function DBquery($sql){
-        $sth = $this->dbh->query($sql);
-        return $sth;
+        return $this->dbh->query($sql);
     }
 }
 ?>
