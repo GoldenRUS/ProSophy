@@ -4,7 +4,7 @@
     </head>
     <body>
         <?php
-            include Q_PATH.'/application/views/View_'.$view.'.php';
+            include Q_PATH.'/application/view/view'.$view.'.php';
         ?>
     </body>
 </html>

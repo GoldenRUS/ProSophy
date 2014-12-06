@@ -1,15 +1,14 @@
 <?php
 
-class controller {
+class controller404 extends controller {
 
     function __construct() {
         
     }
     
     public function actionIndex() {
-        $model = new modelIndex();
         $view = new view();
-        $view->generate('Index', $model->getName());
+        $view->generate('404');
     }
 
 }

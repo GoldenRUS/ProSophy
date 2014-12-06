@@ -8,40 +8,39 @@ class Route {
     
     public static function Start() {
             //назначение параметров по умолчанию
-            $controller_name = 'index';
-            $action_name = 'index';
-            $action_parameters = array();
+            $controllerName = 'Index';
+            $actionName = 'Index';
+            $actionParameters = array();
             
             //преобразуем строку запроса в массив
-            $route_array = explode('/', $_SERVER['REQUEST_URI']);
+            $url = explode('/', $_SERVER['REQUEST_URI']);
             
-            if(!empty($route_array[1])) {
-               $controller_name = $route_array[1];
+            if(!empty($url[1])){
+                $controllerName = $url[1];
             }
 
-            if(!empty($route_array[2])) {
-               $action_name = $route_array[2];
+            if(!empty($url[2])){
+                $actionName = $url[2];
             }
             
             // добавляем префиксы
-            $model_name = 'Model_' . $controller_name;
-            $controller_name = 'Controller_' . $controller_name;
-            $action_name = 'Action_' . $action_name;
+            $model_name = 'model'.$controllerName;
+            $controllerName = 'controller'.$controllerName;
+            $actionName = 'action'.$actionName;
             
-            if(file_exists(Q_PATH.'/application/models/'.$model_name.'.php')) {
-                include Q_PATH.'/application/models/'.$model_name.'.php';
+            if(file_exists(Q_PATH.'/application/model/'.$model_name.'.php')){
+                include Q_PATH.'/application/model/'.$model_name.'.php';
             }
 
-            if(file_exists(Q_PATH.'/application/controllers/'.$controller_name.'.php')) {
-                include Q_PATH.'/application/controllers/'.$controller_name.'.php';
-            }
-            else {
+            if(file_exists(Q_PATH.'/application/controller/'.$controllerName.'.php')){
+                include Q_PATH.'/application/controller/'.$controllerName.'.php';
+            }else{
                 header('Location: /404');
                 exit;
             }
 
-            $controller = new $controller_name();
-            $controller->$action_name();
+            $controller = new $controllerName();
+            $controller->$actionName();
             
     }
 
