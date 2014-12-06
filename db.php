@@ -2,20 +2,8 @@
 
 class DB
 {
-    private $DBhost;
-    private $DBname;
-    private $DBuser;
-    private $DBpass;
-    //Названия таблиц в БД
-	protected $DBmarketP = 'marketplaces';
-    protected $DBprod = 'pruduct';
-    protected $DBmarketL = 'marketlist';
-    protected $DBpriceDate = 'priceofdate';
-    protected $DBcat = 'category';
-    //End
     private $dbh;
     private $DBlist = array();
-    private $Selectors = array();
 
     /*
      * Метод getTables возвращает двумерный массив.
@@ -26,37 +14,28 @@ class DB
         return $this->DBlist;
     }
 
-    private function setDBnames($DBhost = 'localhost', $DBname = 'test', $DBuser, $DBpass){
-        $this->DBhost = $DBhost;
-        $this->DBname = $DBname;
-        $this->DBuser = $DBuser;
-        $this->DBpass = $DBpass;
-    }
-
-    private function DBcon(){
-		$this->dbh = new PDO('mysql:host='.$this->DBhost.';dbname='.$this->DBname, $this->DBuser, $this->DBpass);
+    private function DBcon($DBhost, $DBname, $DBuser, $DBpass){
+        $dsn = 'mysql:host='.$DBhost.';dbname='.$DBname.';charset=UTF8';
+        $opt = array(
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_NUM
+        );
+        $this->dbh = new PDO($dsn, $DBuser, $DBpass, $opt);
 	}
 	
-	function __construct($DBhost, $DBname, $DBuser, $DBpass)
-	{
-		$this->setDBnames($DBhost, $DBname, $DBuser, $DBpass);
-        $this->DBcon();
-		$stmt = $this->dbh->prepare('SHOW TABLES');
-		if ($stmt->execute()) {
-		  while($row = $stmt->fetchColumn()) {
-			$stmt1 = $this->dbh->prepare('SHOW COLUMNS FROM '.$row);
-			if ($stmt1->execute()) {
-			  for($i=0;$row1 = $stmt1->fetchColumn();$i++) {
-				$this->DBlist[$row][$i] = $row1; 
+	function __construct($DBhost, $DBname, $DBuser, $DBpass){
+        $this->DBcon($DBhost, $DBname, $DBuser, $DBpass);
+		$resTables = $this->dbh->prepare('SHOW TABLES');
+		if ($resTables->execute()){
+		  while($table = $resTables->fetchColumn()){
+			$resColumns = $this->dbh->prepare('SHOW COLUMNS FROM '.$table);
+			if ($resColumns->execute()){
+			  for($i = 1 ; $column = $resColumns->fetchColumn() ; $i++){
+                  $this->DBlist[$table][$i] = $column;
 			  }
 			}
 		  }
 		}
-		/*$market = $this->DBselect($this->DBmarketList,$this->DBarg($this->DBmarketList,array(0,2,3)),'','',false);
-		if(!empty($market)){
-			for($i = 0; $i < count($market); $i++)
-				$this->Selectors[$market[$i][0]] = array( 0 => $market[$i][1], 1 => $market[$i][2]);
-		}*/
 	}
 
     /*
@@ -65,11 +44,11 @@ class DB
      */
 
 	private function DBarg($table, $mod){
-		for($i = 0, $str = '' ;$i < count($mod) and $i < count($this->DBlist[(string) $table]); $i++)
-		{
+		for($i = 0, $str = '' ;$i < sizeof($mod) and $i < sizeof($this->DBlist[(string) $table]); $i++){
 			$str .= '`'.$this->DBlist[$table][$mod[$i]].'`';
-			if (($i+1) < count($mod) and !empty($this->DBlist[(string) $table][$mod[$i+1]])) $str .= ', ';
+            $str .= (($i+1) < count($mod) and !empty($this->DBlist[(string) $table][$mod[$i+1]])) ? ', ' : '';
 		}
+
 		return $str;
 	}
 
@@ -78,40 +57,32 @@ class DB
      * из переданной ей строки $column, где $separator - строка, определяющая разделитель (например, ',' или 'AND')
      */
 
-	protected function DBwhere($column, $separator = 'AND'){
+	private function DBwhere($column, $separator = 'AND'){
 		$separator = ' '.trim($separator).' ';
 
-        for($i = 0, $where = '', $column = explode(',', $column) ; $i < count($column) ; $i++)
-		{
+        for($i = 0, $where = '', $column = explode(',', $column) ; $i < sizeof($column) ; $i++){
 			$where .= $column[$i].' = ?';
-			if($i != count($column)-1) $where .= $separator;
+            $where .= $i != count($column)-1 ? $separator : '';
 		}
+
 		return $where;
 	}
 
     /*
      * DBinsert - метод, имитирующий запрос INSERT в SQL
      *
-     * $table
-     * $list
-     * $data
+     * $arrNumColumns - массив порядковых номеров колонок таблицы $table
+     * $arrData - массив данных для вставки в таблицу
      *
-     * $this->DBinsert($this->DBcat, array(1, 2), array('first', 'second'));
+     * $this->DBinsert('<название таблицы>', array(1, 2), array('first', 'second'));
      */
 
-	protected function DBinsert($table, $list, $data){
-		for($i = 0, $count = count($list)-1; $i <= $count;$i++)
-		{
-			$question .= '?';
-			if($i != $count) $question .= ', ';
-		}
-        $list = $this->DBarg($table, $list);
-		$sql = 'INSERT INTO '.$table.' ('.$list.')  VALUES ('.$question.')';
-		$sth = $this->dbh->prepare($sql);
-		if($sth->execute($data))
-			return true;
-		else
-			return false;
+	protected function DBinsert($table, $arrNumColumns, $arrData){
+        $question = implode(', ', array_fill(0, sizeof($arrNumColumns), '?'));
+        $list = $this->DBarg($table, $arrNumColumns);
+		$sth = $this->dbh->prepare('INSERT INTO '.$table.' ('.$list.')  VALUES ('.$question.')');
+
+        return $sth->execute($arrData) ? true : false;
 	}
 
     /*
@@ -122,18 +93,15 @@ class DB
      * $column
      * $data
      *
-     * $this->DBupdate($this->DBcat, array(1), array(0), array('Аксессуары', '17'));
+     * $this->DBupdate('<название таблицы>', array(1), array(0), array('Аксессуары', '17'));
      */
 
 	protected function DBupdate($table, $list, $column, $data){
         $list = $this->DBwhere($this->DBarg($table, $list), ',');
         $where = $this->DBwhere($this->DBarg($table, $column));
-		$sql = 'UPDATE '.$table.' SET '.$list.' WHERE '.$where;
-		$sth = $this->dbh->prepare($sql);
-		if($sth->execute($data))
-			return true;
-		else
-			return false;
+		$sth = $this->dbh->prepare('UPDATE '.$table.' SET '.$list.' WHERE '.$where);
+
+        return $sth->execute($data) ? true : false;
 	}
 
     /*
@@ -144,19 +112,16 @@ class DB
      * $data - массив значений, содержащихся в полях, указанных в переменной $column
      *
      * Удалить запись
-     * $this->DBdelete($table, array(0), array(18));
+     * $this->DBdelete('<название таблицы>', array(0), array(18));
      *
      */
 
 	protected function DBdelete($table, $column, $data){
         $column = $this->DBarg($table, $column);
         $where = $this->DBwhere($column);
-		$sql = 'DELETE FROM '.$table.' WHERE '.$where;
-		$sth = $this->dbh->prepare($sql);
-		if($sth->execute($data))
-			return true;
-		else
-			return false;
+		$sth = $this->dbh->prepare('DELETE FROM '.$table.' WHERE '.$where);
+
+		return $sth->execute($data) ? true : false;
 	}
 
     /*
@@ -168,65 +133,31 @@ class DB
          * $data - массив значений, содержащихся в полях, указанных в переменной $column
          *
          * Вытащить все записи из таблицы
-         * $mas = $this->DBselect($this->DBcat, array(0, 1, 2));
+         * $mas = $this->DBselect('<название таблицы>', array(0, 1, 2));
          *
          * Вытащить определенные записи
-         * $mas = $this->DBselect($this->DBcat, array(0, 1, 2), array(0), array(17));
+         * $mas = $this->DBselect('<название таблицы>', array(0, 1, 2), array(0), array(17));
          *
     */
 
-	protected function DBselect($table, $list, $column = 0, $data = 0){
-        $list = $this->DBarg($table, $list);
+	protected function DBselect($table, $list = 0, $column = 0, $data = 0){
+        $list = $list != 0 ? $this->DBarg($table, $list) : '*';
         if(!empty($column)){
             $column = $this->DBarg($table, $column);
 			$where = $this->DBwhere($column);
-			$sql = 'SELECT '.$list.' FROM '.$table.' WHERE '.$where;
-			$sth = $this->dbh->prepare($sql);
+			$sth = $this->dbh->prepare('SELECT '.$list.' FROM '.$table.' WHERE '.$where);
 			$sth->execute($data);
-			while ($res = $sth->fetch(PDO::FETCH_NUM)) {
+			while ($res = $sth->fetch()){
+				$result[] = $res;
+			}
+		}else{
+			$sth = $this->dbh->query('SELECT '.$list.' FROM '.$table);
+			while ($res = $sth->fetch()){
 				$result[] = $res;
 			}
 		}
-		else{
-			$sql = 'SELECT '.$list.' FROM '.$table;
-			$sth = $this->dbh->query($sql);
-			while ($res = $sth->fetch(PDO::FETCH_NUM)) {
-				$result[] = $res;
-			}
-		}
-		if(!empty($result))
-		{
-			return $result;
-		}
-		else
-			return false;
-	}
-	
-	protected function DBselectOrder($table,$list,$column,$data,$where,$order){
-		//$mas = $this->DBselect($this->DBwin,$this->DBarg($this->DBwin,array(0,2)),$this->DBarg($this->DBwin,array(1,2,3)),array('lal'),true);
-		if($where === true){
-			$where = $this->DBwhere($column);
-			$sql = 'SELECT '.$list.' FROM '.$table.' WHERE '.$where.' ORDER by '.$order;;
-			$sth = $this->dbh->prepare($sql);
-			$sth->execute($data);
-			while ($res = $sth->fetch(PDO::FETCH_NUM)) {
-				$result[] = $res;
-			}
-		}
-		else{
-			$sql = 'SELECT '.$list.' FROM '.$table.' ORDER by '.$order;
-			$sth = $this->dbh->query($sql);
-			while ($res = $sth->fetch(PDO::FETCH_NUM)) {
-				$result[] = $res;
-			}
-		}
-		if(!empty($result))
-		{
-			return $result;
-		}
-		else
-			return false;
-	}	
-}
 
+		return !empty($result) ? $result : false;
+	}
+}
 ?>
