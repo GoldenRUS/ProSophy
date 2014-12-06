@@ -1,7 +1,5 @@
 ProSophy
 ========
-##Структура файлов и папок
-//дописать
 --------------
 #За что у нас бьют по рукам
 * За плохой код (ниже читайте как сделать его хорошим)
@@ -110,11 +108,11 @@ ProSophy
 **Так делать плохо:**
 
     $query = "SELECT * FROM `sample`";
-    $this->query($query);
+    $this->DBquery($query);
 
 **Так делать хорошо:**
 
-    $this->query("SELECT * FROM `sample`");
+    $this->DBquery("SELECT * FROM `sample`");
 
 Применчание: если у вас динамический (строящийся) запрос - можно использовать первый метод.
 
@@ -200,7 +198,7 @@ ProSophy
 **Старая функция**
 
     function getAllUserOrders($userID){
-		$query = $this->query("SELECT * FROM `history` WHERE `userid` = '{$userID}' ORDER BY `id` DESC");
+		$query = $this->DBquery("SELECT * FROM `history` WHERE `userid` = '{$userID}' ORDER BY `id` DESC");
 		$commSumm = 0;
 		$count = 0;
 		$paymentTypes = $this->getPaytypes(true);
@@ -242,7 +240,7 @@ ProSophy
 
     function getAllUserOrders($userID, $deleted = true){
 		$deleted = ($deleted == true ? '' : " AND `trash` = '0'");
-		$query = $this->query("SELECT * FROM `history` WHERE `userid` = '{$userID}'".$deleted." ORDER BY `id` DESC");
+		$query = $this->DBquery("SELECT * FROM `history` WHERE `userid` = '{$userID}'".$deleted." ORDER BY `id` DESC");
 		$commSumm = 0;
 		$count = 0;
 		$paymentTypes = $this->getPaytypes(true);
@@ -331,9 +329,5 @@ ProSophy
 **Плохое название**: $totalMoney = '960'; //сумма заказов
 
 **Важно**: переменные, которые являются входными параметрами функции, нужно называть так, чтобы они отражали всю суть вещей!!!
-
-
-**Политика: разделяй и властвуй**
-..дописать
 
 ##Пока что всё, в скором времени список возможно будет дополнен
