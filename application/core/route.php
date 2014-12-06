@@ -24,12 +24,12 @@ class Route {
             }
             
             // добавляем префиксы
-            $model_name = 'model'.$controllerName;
+            $modelName = 'model'.$controllerName;
             $controllerName = 'controller'.$controllerName;
             $actionName = 'action'.$actionName;
             
-            if(file_exists(Q_PATH.'/application/model/'.$model_name.'.php')){
-                include Q_PATH.'/application/model/'.$model_name.'.php';
+            if(file_exists(Q_PATH.'/application/model/'.$modelName.'.php')){
+                include Q_PATH.'/application/model/'.$modelName.'.php';
             }
 
             if(file_exists(Q_PATH.'/application/controller/'.$controllerName.'.php')){

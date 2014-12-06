@@ -7,7 +7,7 @@ class controller {
     }
     
     public function actionIndex() {
-        $model = new modelIndex();
+        $model = new modelIndex('localhost', 'blog', 'krava', '');
         $view = new view();
         $view->generate('Index', $model->getName());
     }

@@ -2,12 +2,9 @@
 
 class modelIndex extends model {
 
-    function __construct() {
-        
-    }
-    
     public function getName() {
-        return array('MVC');
+        $mas = $this->DBselect('articles', 0);
+        return $mas;
     }
 
 }
