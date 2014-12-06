@@ -132,6 +132,9 @@ class DB
          * $column - массив названий полей таблицы (идущих после WHERE)
          * $data - массив значений, содержащихся в полях, указанных в переменной $column
          *
+         * Вытащить все записи и все колонки
+         * $mas = $this->DBselect('<название таблицы>', 0);
+         *
          * Вытащить все записи из таблицы
          * $mas = $this->DBselect('<название таблицы>', array(0, 1, 2));
          *
@@ -140,7 +143,7 @@ class DB
          *
     */
 
-	protected function DBselect($table, $list = 0, $column = 0, $data = 0){
+	protected function DBselect($table, $list, $column = 0, $data = 0){
         $list = $list != 0 ? $this->DBarg($table, $list) : '*';
         if(!empty($column)){
             $column = $this->DBarg($table, $column);
@@ -159,5 +162,24 @@ class DB
 
 		return !empty($result) ? $result : false;
 	}
+
+    /*
+     * Метод DBquery выполняет произвольный sql запрос и возвращает экземпляр класса для дальнейшей обработки данных
+     *
+     * Пример для выборки одного элемента:
+     *
+     * $sth = $this->DBquery('SELECT * FROM <название таблицы> WHERE id = 3 ');
+     * $res = $sth->fetch();
+     *
+     * Пример для выборки нескольких записей:
+     *
+     * $sth = $this->DBquery('SELECT * FROM <название таблицы>');
+     * $res = $sth->fetchAll();
+     */
+
+    protected function DBquery($sql){
+        $sth = $this->dbh->query($sql);
+        return $sth;
+    }
 }
 ?>

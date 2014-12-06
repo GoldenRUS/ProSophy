@@ -13,8 +13,9 @@ function __autoload($class_name) {
 class Index extends DB{
 
     function test(){
-        $mas = $this->DBselect('wp_users');
-        return $mas;
+        $sth = $this->DBquery('SELECT * FROM wp_users');
+        $res = $sth->fetchAll();
+        return $res;
     }
 
 }
