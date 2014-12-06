@@ -88,20 +88,19 @@ class DB
     /*
      * BDupdate - метод, имитирующий запрос UPDATE в SQL
      *
-     * $table
-     * $list
-     * $column
-     * $data
+     * $arrNumColumns - массив порядковых номеров колонок таблицы $table
+     * $column - массив порядковых номеров колонок таблицы для WHERE
+     * $arrData - массив данных для вставки в таблицу
      *
      * $this->DBupdate('<название таблицы>', array(1), array(0), array('Аксессуары', '17'));
      */
 
-	protected function DBupdate($table, $list, $column, $data){
-        $list = $this->DBwhere($this->DBarg($table, $list), ',');
+	protected function DBupdate($table, $arrNumColumns, $column, $arrData){
+        $list = $this->DBwhere($this->DBarg($table, $arrNumColumns), ',');
         $where = $this->DBwhere($this->DBarg($table, $column));
 		$sth = $this->dbh->prepare('UPDATE '.$table.' SET '.$list.' WHERE '.$where);
 
-        return $sth->execute($data) ? true : false;
+        return $sth->execute($arrData) ? true : false;
 	}
 
     /*
